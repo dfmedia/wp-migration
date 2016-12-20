@@ -199,7 +199,7 @@ class DFM_Migration_CLI extends WP_CLI {
 		$new_users = new \WP_CLI\Iterators\CSV( $filename );
 
 		// Show the initial message of how many users are importing
-		WP_CLI::success( __( 'Importing users...', 'mason' ) );
+		WP_CLI::success( __( 'Importing users...', 'wp-migration' ) );
 
 		// Iterate over the CSV
 		foreach ( $new_users as $i => $new_user ) {
@@ -238,13 +238,13 @@ class DFM_Migration_CLI extends WP_CLI {
 
 				// Set the $user_id as the ID of the existing user
 				$user_id = $existing_user->ID;
-				WP_CLI::line( __( 'Existing user was found: ', 'mason' ) . $existing_user->ID . ' : ' . $existing_user->display_name );
+				WP_CLI::line( __( 'Existing user was found: ', 'wp-migration' ) . $existing_user->ID . ' : ' . $existing_user->display_name );
 
 			// Create the user
 			} else {
 
-				WP_CLI::line( __( 'No Existing user was found for ', 'mason' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
-				WP_CLI::line( __( 'Creating a new user...', 'mason' ) );
+				WP_CLI::line( __( 'No Existing user was found for ', 'wp-migration' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
+				WP_CLI::line( __( 'Creating a new user...', 'wp-migration' ) );
 
 				unset( $new_user['ID'] ); // Unset else it will just return the ID
 
@@ -277,12 +277,12 @@ class DFM_Migration_CLI extends WP_CLI {
 				if ( empty( $guest_author_id ) ) {
 
 					// Something must've failed with the coauthor creation hook, so display a warning so we know what author needs their data updated still
-					WP_CLI::warning( __( 'Uh oh. No Guest Author was found for: ', 'mason' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
-					WP_CLI::warning( __( 'Their author profile will not be updated by this import.', 'mason' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
+					WP_CLI::warning( __( 'Uh oh. No Guest Author was found for: ', 'wp-migration' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
+					WP_CLI::warning( __( 'Their author profile will not be updated by this import.', 'wp-migration' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
 
 				} else {
 
-					WP_CLI::line( __( 'Updating coauthor profile meta', 'mason' ) );
+					WP_CLI::line( __( 'Updating coauthor profile meta', 'wp-migration' ) );
 
 					// Map the spreadsheet data to the Co Author post_meta fields
 					$guest_author_meta = array(
@@ -312,14 +312,14 @@ class DFM_Migration_CLI extends WP_CLI {
 
 					}
 
-					WP_CLI::line( __( 'Profile meta updated...', 'mason' ) );
+					WP_CLI::line( __( 'Profile meta updated...', 'wp-migration' ) );
 
 				}
 
 			}
 
 			// Display success for the imported user
-			WP_CLI::success( __( 'User and Guest Author Profile imported for ', 'mason' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
+			WP_CLI::success( __( 'User and Guest Author Profile imported for ', 'wp-migration' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
 
 		}
 
@@ -338,7 +338,7 @@ class DFM_Migration_CLI extends WP_CLI {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp mason import_cap_authors_with_no_users /path/to/csv.csv
+	 * wp dfm-migration import_cap_authors_with_no_users /path/to/csv.csv
 	 *
 	 */
 	public function import_cap_authors_with_no_users( $args, $assoc_args ) {
