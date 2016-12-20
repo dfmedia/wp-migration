@@ -413,7 +413,8 @@ class DFM_Migration_CLI extends WP_CLI {
 				}
 
 			}
-
+			
+			// Add some visual separation
 			WP_CLI::line();
 
 		}
