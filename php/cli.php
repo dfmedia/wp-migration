@@ -404,7 +404,7 @@ class DFM_Migration_CLI extends WP_CLI {
 
 			} else {
 
-				WP_CLI::success( __( 'Guest Author created', 'mason' ) . ': ' . $guest_author_id );
+				WP_CLI::success( __( 'Guest Author created', 'wp-migration' ) . ': ' . $guest_author_id );
 
 				// Update the cap-source postmeta
 				if ( ! empty( $guest_author_id ) && ! empty( $author_data['source_name'] ) ) {
