@@ -199,7 +199,7 @@ class DFM_Migration_CLI extends WP_CLI {
 		$new_users = new \WP_CLI\Iterators\CSV( $filename );
 
 		// Show the initial message of how many users are importing
-		WP_CLI::success( __( 'Importing users...', 'mason' ) );
+		WP_CLI::success( __( 'Importing users...', 'wp-migration' ) );
 
 		// Iterate over the CSV
 		foreach ( $new_users as $i => $new_user ) {
@@ -238,13 +238,13 @@ class DFM_Migration_CLI extends WP_CLI {
 
 				// Set the $user_id as the ID of the existing user
 				$user_id = $existing_user->ID;
-				WP_CLI::line( __( 'Existing user was found: ', 'mason' ) . $existing_user->ID . ' : ' . $existing_user->display_name );
+				WP_CLI::line( __( 'Existing user was found: ', 'wp-migration' ) . $existing_user->ID . ' : ' . $existing_user->display_name );
 
 			// Create the user
 			} else {
 
-				WP_CLI::line( __( 'No Existing user was found for ', 'mason' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
-				WP_CLI::line( __( 'Creating a new user...', 'mason' ) );
+				WP_CLI::line( __( 'No Existing user was found for ', 'wp-migration' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
+				WP_CLI::line( __( 'Creating a new user...', 'wp-migration' ) );
 
 				unset( $new_user['ID'] ); // Unset else it will just return the ID
 
@@ -277,12 +277,12 @@ class DFM_Migration_CLI extends WP_CLI {
 				if ( empty( $guest_author_id ) ) {
 
 					// Something must've failed with the coauthor creation hook, so display a warning so we know what author needs their data updated still
-					WP_CLI::warning( __( 'Uh oh. No Guest Author was found for: ', 'mason' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
-					WP_CLI::warning( __( 'Their author profile will not be updated by this import.', 'mason' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
+					WP_CLI::warning( __( 'Uh oh. No Guest Author was found for: ', 'wp-migration' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
+					WP_CLI::warning( __( 'Their author profile will not be updated by this import.', 'wp-migration' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
 
 				} else {
 
-					WP_CLI::line( __( 'Updating coauthor profile meta', 'mason' ) );
+					WP_CLI::line( __( 'Updating coauthor profile meta', 'wp-migration' ) );
 
 					// Map the spreadsheet data to the Co Author post_meta fields
 					$guest_author_meta = array(
@@ -312,19 +312,113 @@ class DFM_Migration_CLI extends WP_CLI {
 
 					}
 
-					WP_CLI::line( __( 'Profile meta updated...', 'mason' ) );
+					WP_CLI::line( __( 'Profile meta updated...', 'wp-migration' ) );
 
 				}
 
 			}
 
 			// Display success for the imported user
-			WP_CLI::success( __( 'User and Guest Author Profile imported for ', 'mason' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
+			WP_CLI::success( __( 'User and Guest Author Profile imported for ', 'wp-migration' ) . $new_user['first_name'] . ' ' . $new_user['last_name'] );
 
 		}
 
 		// Show the final success message
 		WP_CLI::success( 'Done!' );
+	}
+	
+	/**
+	 * Imports users from a CSV file and creates CAP authors but does not attach to users
+	 *
+	 * NOTE: This is to be used on stage environments only and is NOT intended for use on VIP Production environments
+	 *
+	 * @see: https://github.com/wp-cli/wp-cli/blob/master/php/commands/user.php#L656
+	 *
+	 * ## OPTIONS
+	 *
+	 * ## EXAMPLES
+	 *
+	 * wp dfm-migration import_cap_authors_with_no_users /path/to/csv.csv
+	 *
+	 */
+	public function import_cap_authors_with_no_users( $args, $assoc_args ) {
+
+		global $coauthors_plus;
+
+		$filename = $args[0];
+
+		if ( 0 === stripos( $filename, 'http://' ) || 0 === stripos( $filename, 'https://' ) ) {
+
+			$response = wp_remote_head( $filename );
+			$response_code = (string) wp_remote_retrieve_response_code( $response );
+
+			if ( in_array( $response_code[0], array( 4, 5 ), true ) ) {
+
+				WP_CLI::error( "Couldn't access remote CSV file (HTTP {$response_code} response)." );
+
+			}
+
+		} else if ( ! file_exists( $filename ) ) {
+
+			WP_CLI::error( sprintf( 'Missing file: %s', $filename ) );
+
+		}
+
+		// Get the CSV Contents
+		$new_cap_authors = new \WP_CLI\Iterators\CSV( $filename );
+
+		// Loop through the
+		foreach ( $new_cap_authors as $i => $new_cap_author ) {
+
+			$guest_author_id = '';
+
+			$author_data = array(
+				'display_name' => $new_cap_author['display_name'],
+				'first_name' => $new_cap_author['first_name'],
+				'last_name' => $new_cap_author['last_name'],
+				'source_name' => $new_cap_author['source_name'],
+			);
+
+			// Check for existing coauthor with the
+			$existing_coauthor = $coauthors_plus->get_coauthor_by( 'display_name', $author_data['display_name'] );
+
+			// Bail if there's already a caouthor with this display_name
+			if ( 'guest-author' === $existing_coauthor->type ) {
+				WP_CLI::line( 'CAP Author already exists' );
+				return;
+			}
+
+			// Create a guest author
+			$guest_author_id = $coauthors_plus->guest_authors->create( array(
+				'display_name' => $author_data['display_name'],
+				'user_login' => $author_data['display_name'],
+				'first_name' => $author_data['first_name'],
+				'last_name' => $author_data['last_name'],
+			) );
+
+
+			if ( is_wp_error( $guest_author_id ) || ! is_int( $guest_author_id ) ) {
+
+				WP_CLI::warning( 'No Author created for ' . $author_data['display_name'] );
+				WP_CLI::warning( 'Incomplete data or duplicate coauthor...' );
+
+			} else {
+
+				WP_CLI::success( __( 'Guest Author created', 'wp-migration' ) . ': ' . $guest_author_id );
+
+				// Update the cap-source postmeta
+				if ( ! empty( $guest_author_id ) && ! empty( $author_data['source_name'] ) ) {
+					update_post_meta( $guest_author_id, 'cap-source', $author_data['source_name'] );
+					WP_CLI::success( __( 'cap-source updated for author', 'wp-migration' ) . ': ' . $guest_author_id );
+				}
+
+			}
+			
+			// Add some visual separation
+			WP_CLI::line();
+
+		}
+
 	}
 
 }
