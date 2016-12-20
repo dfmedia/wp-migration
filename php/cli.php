@@ -374,9 +374,9 @@ class DFM_Migration_CLI extends WP_CLI {
 
 			$author_data = array(
 				'display_name' => $new_cap_author['display_name'],
-				'first_name' =>$new_cap_author['first_name'],
-				'last_name' =>$new_cap_author['last_name'],
-				'source_name' =>$new_cap_author['source_name'],
+				'first_name' => $new_cap_author['first_name'],
+				'last_name' => $new_cap_author['last_name'],
+				'source_name' => $new_cap_author['source_name'],
 			);
 
 			// Check for existing coauthor with the
