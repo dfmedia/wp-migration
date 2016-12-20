@@ -409,7 +409,7 @@ class DFM_Migration_CLI extends WP_CLI {
 				// Update the cap-source postmeta
 				if ( ! empty( $guest_author_id ) && ! empty( $author_data['source_name'] ) ) {
 					update_post_meta( $guest_author_id, 'cap-source', $author_data['source_name'] );
-					WP_CLI::success( __( 'cap-source updated for author', 'mason' ) . ': ' . $guest_author_id );
+					WP_CLI::success( __( 'cap-source updated for author', 'wp-migration' ) . ': ' . $guest_author_id );
 				}
 
 			}
